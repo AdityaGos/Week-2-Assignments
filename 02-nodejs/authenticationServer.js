@@ -29,9 +29,109 @@
   Testing the server - run `npm run test-authenticationServer` command in terminal
  */
 
-const express = require("express")
+const express = require("express");
 const PORT = 3000;
 const app = express();
-// write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
+const bodyParser = require("body-parser");
 
+app.use(bodyParser.json());
+// app.listen(PORT, () => {
+//   console.log(`listening on port ${PORT}`);
+// });
+
+let userDataArray = [];
+
+function handleSignup(req, res) {
+  // const username = req.body.username;
+  const password = req.body.password;
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const email = req.body.email;
+  if (email && password && firstName && lastName) {
+    const userExist = userDataArray.find((elem) => email === elem.email);
+
+    // console.log(userExist);
+    if (!userExist) {
+      const timestamp = new Date().getTime();
+      const randomNum = Math.floor(Math.random() * 10000);
+      const randomId = `${timestamp}${randomNum}`;
+      const userData = {
+        id: randomId,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+      };
+      userDataArray.push(userData);
+      console.log("userData" + JSON.stringify(userDataArray));
+      // res.status(201).json(userData)
+      res.status(201).send("Signup successful");
+    } else {
+      res.status(400).json("User already exist");
+    }
+  } else {
+    res.status(400).json("Please enter all your field");
+  }
+}
+function handleLogin(req, res) {
+  const email = req.body.email;
+  const password = req.body.password;
+  console.log("Password" + password);
+  if (email && password) {
+    const findUser = userDataArray.find((elem) => elem.email === email);
+
+    if (!findUser) {
+      res.status(400).json(`UserName don't exist ,Please signup`);
+    }
+    const checkPassword = findUser.password === password;
+    if (checkPassword) {
+      res.status(200).json(findUser);
+    } else {
+      res.status(401).json("Please enter correct password");
+    }
+  } else {
+    res.status(400).json("Please provide both your username and password");
+  }
+}
+
+function handleData(req, res, next) {
+  const email = req.headers.email;
+  const password = req.headers.password;
+
+  if (email && password) {
+    const findUserName = userDataArray.find((elem) => elem.email === email);
+
+    if (findUserName) {
+      const checkPassword = findUserName.password == password;
+      if (checkPassword) {
+        // let allUserData=[]
+        const users = userDataArray.map((user) => {
+          return {
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          };
+        });
+
+        res.status(200).json({ users });
+      } else {
+        res.status(401).json("Please enter correct password");
+      }
+    } else {
+      res.status(401).json(`UserName don't exist ,Please signup`);
+    }
+  } else {
+    res.status(401).send("Unauthorized");
+  }
+}
+
+app.post("/signup", handleSignup);
+
+app.post("/login", handleLogin);
+app.get("/data", handleData);
+app.use((req, res) => {
+  res.status(404).send("404 - Not Found");
+});
+
+// write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
 module.exports = app;
