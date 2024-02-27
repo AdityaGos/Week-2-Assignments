@@ -41,7 +41,7 @@
  */
 const express = require('express');
 const bodyParser = require('body-parser');
-const Todos=[]
+let Todos=[]
 const app = express();
 const PORT = 3000;
 app.use(bodyParser.json());
@@ -51,21 +51,74 @@ app.listen(PORT, () => {
   console.log(`listening on port ${PORT}`);
 });
 
-const createTodos = (req, res) => {
+const createTodo = (req, res) => {
 
-  const todo = {
-    id: Math.floor(Math.random() * 100),
-    todo:req.body.todo
+  console.log(req.body)
+  if(req.body.title && req.body.description)
+  {
+    const todo = {
+      id: Math.floor(Math.random() * 100),
+      description:req.body.description,
+      title:req.body.title,
+      completed:req.body.completed,
+    }
+  
+    Todos.push(todo);
+  
+    res.status(201).json(todo)
+  
   }
-
-  Todos.push(todo);
-
-  res.status(201).json(todo)
-
+  else res.status(404).send('Please enter title && description')
+  
 
 
 }
-app.post('/todos', createTodos)
+
+const updateTodo = (req, res) => {
+  const id = req.params.id;
+  const todo = Todos.find((todo) => todo.id == id)
+
+  if(!todo) 
+  { 
+    return res.status(404).send('Not found')
+  }
+  else{
+   todo.description = req.body.description? req.body.description : todo.description
+   todo.title = req.body.title ? req.body.title : todo.title
+   console.log(JSON.stringify(Todos))
+    res.status(200).json(Todos)
+}
+
+}
+
+const getTodo = (req, res) => {
+
+res.status(200).json(Todos)
+}
+
+const getSingleTodo =(req, res) => {
+
+  const id = req.params.id
+  const todo = Todos.find((todo) => todo.id == id)
+  if(!todo) return res.status(404).send({error: 'Not Found'})
+  res.status(200).json(todo)
+}
+
+const deleteTodo = (req, res) => {
+
+  const id = req.params.id
+  const todo = Todos.find((todo) => todo.id == id)
+  if(!todo) return res.status(404).send({error: 'Not Found'})
+ Todos= Todos.filter((todo) => todo.id != id)
+res.status(200).send('Deleted Successfully')
+
+
+}
+app.post('/todos', createTodo)
+app.put('/todos/:id', updateTodo)
+app.get('/todos/', getTodo)
+app.get('/todos/:id', getSingleTodo)
+app.delete('/todos/:id', deleteTodo)
 app.all('*', (req, res) => {
   res.status(404).send('Route not found');
 });
