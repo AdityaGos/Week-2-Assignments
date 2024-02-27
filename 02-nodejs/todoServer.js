@@ -41,9 +41,32 @@
  */
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const Todos=[]
 const app = express();
-
+const PORT = 3000;
 app.use(bodyParser.json());
 
+
+app.listen(PORT, () => {
+  console.log(`listening on port ${PORT}`);
+});
+
+const createTodos = (req, res) => {
+
+  const todo = {
+    id: Math.floor(Math.random() * 100),
+    todo:req.body.todo
+  }
+
+  Todos.push(todo);
+
+  res.status(201).json(todo)
+
+
+
+}
+app.post('/todos', createTodos)
+app.all('*', (req, res) => {
+  res.status(404).send('Route not found');
+});
 module.exports = app;
